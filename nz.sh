@@ -413,7 +413,60 @@ main() {
     log "Build log saved to: $LOG_FILE"
 }
 
-# Script entry point
+# Quick diagnosis function
+diagnose() {
+    echo "=== Zori OS Build Diagnostics ==="
+    echo "System: $(uname -a)"
+    echo "Distribution: $(cat /etc/os-release | grep PRETTY_NAME || echo 'Unknown')"
+    echo "User: $(whoami) (UID: $EUID)"
+    echo "Working directory: $PWD"
+    echo "Free space: $(df -h . | tail -1 | awk '{print $4}')"
+    echo ""
+    echo "Dependencies check:"
+    for cmd in git cmake make go mkarchiso; do
+        if command -v "$cmd" &> /dev/null; then
+            echo "✓ $cmd: $(command -v "$cmd")"
+        else
+            echo "✗ $cmd: NOT FOUND"
+        fi
+    done
+    echo ""
+    echo "Key paths:"
+    [[ -d "/usr/share/archiso/configs/releng" ]] && echo "✓ archiso releng config found" || echo "✗ archiso releng config missing"
+    [[ -f "$LOG_FILE" ]] && echo "✓ Log file: $LOG_FILE" || echo "✗ No log file yet"
+    echo ""
+    if [[ -f "$LOG_FILE" ]]; then
+        echo "Last 10 log entries:"
+        tail -10 "$LOG_FILE"
+    fi
+}
+
+# Script entry point with argument handling
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
+    case "${1:-build}" in
+        "diagnose"|"diag"|"debug")
+            diagnose
+            ;;
+        "build"|"")
+            main "$@"
+            ;;
+        "help"|"-h"|"--help")
+            echo "Zori OS ISO Builder"
+            echo "Usage: $0 [command]"
+            echo ""
+            echo "Commands:"
+            echo "  build     - Build the ISO (default)"
+            echo "  install   - Install dependencies only"
+            echo "  diagnose  - Run diagnostics"
+            echo "  help      - Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  $0                    # Build ISO with auto-dependency installation"
+            echo "  $0 install           # Install dependencies only"
+            echo "  $0 diagnose          # Check system and troubleshoot"
+            ;;
+        *)
+            error "Unknown command: $1. Use '$0 help' for usage."
+            ;;
+    esac
 fi
