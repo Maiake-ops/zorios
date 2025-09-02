@@ -15,7 +15,7 @@ mkdir -p airootfs/etc/skel
 cd ~
 echo "preparing for building calamares"
 cd ~/zori
-git clone --branch 3.3.9 https://github.com/calamares/calamares.git calamares-src
+git clone https://github.com/calamares/calamares.git calamares-src
 cd calamares-src
 mkdir build
 mkdir -p calamares-src/build
