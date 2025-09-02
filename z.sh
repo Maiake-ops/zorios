@@ -22,7 +22,7 @@ if [ ! -d "$DISTRO_DIR" ]; then
     cp -r /usr/share/archiso/configs/releng $DISTRO_DIR
 fi
 
-cd $DISTRO_DIR
+cd $DISTRO_DIR/releng
 
 # 3. Base packages
 cat >> packages.x86_64 <<EOF
@@ -125,8 +125,30 @@ yay -S --noconfirm calamares calamares-config-arch
 EOS
 chmod +x airootfs/root/bootstrap-calamares.sh
 
-# 7. Profile name
-sed -i "s|iso_name=.*|iso_name=\"${DISTRO_NAME}\"|" profiledef.sh
+# 7. Write profiledef.sh
+cat > profiledef.sh <<EOF
+#!/usr/bin/env bash
+# Profile definition for Zori OS
+
+iso_name="$DISTRO_NAME"
+iso_label="ZORI_$(date +%Y%m)"
+iso_publisher="Zori OS Project <https://example.com>"
+iso_application="Zori OS Live ISO"
+iso_version="$(date +%Y.%m.%d)"
+install_dir="arch"
+buildmodes=('iso')
+bootmodes=('bios.syslinux.mbr' 'bios.syslinux.eltorito' 'uefi-x64.systemd-boot.esp' 'uefi-x64.systemd-boot.eltorito')
+arch="x86_64"
+pacman_conf="pacman.conf"
+airootfs_image_type="squashfs"
+airootfs_image_tool_options=('-comp' 'xz' '-Xbcj' 'x86' '-b' '1M' '-Xdict-size' '1M')
+file_permissions=(
+  ["/etc/shadow"]="0:0:400"
+  ["/etc/gshadow"]="0:0:400"
+  ["/etc/sudoers"]="0:0:440"
+  ["/etc/sudoers.d"]="0:0:750"
+)
+EOF
 
 # 8. Build ISO
 mkdir -p $ISO_OUT
